@@ -43,6 +43,7 @@
 	</repositories>
 
 	<properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<storm.version>0.9.0-rc2</storm.version>
 	</properties>
 
@@ -64,17 +65,13 @@
 			<version>${storm.version}</version>
 			<!-- keep storm out of the jar-with-dependencies -->
 			<scope>provided</scope>
-			<exclusions>
-				<exclusion>
-					<artifactId>slf4j-api</artifactId>
-					<groupId>org.slf4j</groupId>
-				</exclusion>
-			</exclusions>
 		</dependency>
 		<dependency>
 		    <groupId>org.elasticsearch</groupId>
 		    <artifactId>elasticsearch</artifactId>
 		    <version>0.90.5</version>
+            <!-- force users to specify which version they want -->
+            <scope>provided</scope>
 		</dependency>
 	</dependencies>
 	<build>
