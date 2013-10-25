@@ -12,11 +12,16 @@ import static org.elasticsearch.node.NodeBuilder.nodeBuilder;
 
 public class NodeClientFactory implements ClientFactory {
     private static final Logger LOG = LoggerFactory.getLogger(NodeClientFactory.class);
+    private Client client;
+
     @Override
     public Client makeClient(Map conf) {
         String clusterName = (String)conf.get(CLUSTER_NAME);
         LOG.info("Attaching node client to cluster: '{}'", clusterName);
-        Node node = nodeBuilder().clusterName(clusterName).client(true).data(false).node();
-        return node.client();
+        if(client == null) {
+            Node node = nodeBuilder().clusterName(clusterName).client(true).data(false).node();
+            client = node.client();
+        }
+        return client;
     }
 }
