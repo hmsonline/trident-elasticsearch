@@ -1,7 +1,7 @@
 package com.hmsonline.storm.es.trident;
 
 import org.apache.commons.lang.StringUtils;
-import org.elasticsearch.ElasticSearchException;
+import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.action.bulk.BulkRequestBuilder;
 import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.client.Client;
@@ -63,7 +63,7 @@ public class IndexState implements State {
             if(bulkResponse.hasFailures()){
                 this.exceptionHandler.onBulkRequestFailure(bulkResponse);
             }
-        } catch(ElasticSearchException e){
+        } catch(ElasticsearchException e){
             this.exceptionHandler.onElasticSearchException(e);
         }
     }
