@@ -68,7 +68,7 @@
 		<dependency>
 		    <groupId>org.elasticsearch</groupId>
 		    <artifactId>elasticsearch</artifactId>
-		    <version>1.0.0.RC2</version>
+		    <version>1.0.0</version>
             <!-- force users to specify which version they want -->
             <scope>provided</scope>
 		</dependency>
