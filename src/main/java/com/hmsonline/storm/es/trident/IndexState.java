@@ -12,7 +12,7 @@ import storm.trident.tuple.TridentTuple;
 import java.util.List;
 
 public class IndexState implements State {
-
+    private static final int MAX_BATCH_SIZE = 100;
     private Client client;
     private ExceptionHandler exceptionHandler;
 
@@ -33,6 +33,7 @@ public class IndexState implements State {
     }
 
     public void updateState(List<TridentTuple> tridentTuples, IndexTupleMapper mapper, TridentCollector tridentCollector){
+        int i = 0;
         BulkRequestBuilder bulkRequest = client.prepareBulk();
         for(TridentTuple tuple : tridentTuples){
             if(! mapper.delete(tuple)){
@@ -56,15 +57,30 @@ public class IndexState implements State {
                         mapper.toTypeName(tuple),
                         mapper.toId(tuple)
                 ));
+            }            
+            i++;
+            if(i >= MAX_BATCH_SIZE) {
+                try{
+                    BulkResponse bulkResponse = bulkRequest.execute().actionGet();
+                    if(bulkResponse.hasFailures()){
+                        this.exceptionHandler.onBulkRequestFailure(bulkResponse);
+                    }
+                } catch(ElasticsearchException e){
+                    this.exceptionHandler.onElasticSearchException(e);
+                } 
+                bulkRequest = client.prepareBulk();
+                i = 0;
             }
         }
-        try{
-            BulkResponse bulkResponse = bulkRequest.execute().actionGet();
-            if(bulkResponse.hasFailures()){
-                this.exceptionHandler.onBulkRequestFailure(bulkResponse);
+        if (i > 0) {
+            try {
+                BulkResponse bulkResponse = bulkRequest.execute().actionGet();
+                if (bulkResponse.hasFailures()) {
+                    this.exceptionHandler.onBulkRequestFailure(bulkResponse);
+                }
+            } catch (ElasticsearchException e) {
+                this.exceptionHandler.onElasticSearchException(e);
             }
-        } catch(ElasticsearchException e){
-            this.exceptionHandler.onElasticSearchException(e);
         }
     }
 }
