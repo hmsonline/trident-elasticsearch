@@ -10,6 +10,7 @@ import storm.trident.state.State;
 import storm.trident.tuple.TridentTuple;
 
 import java.util.List;
+import java.util.Map;
 
 public class IndexState implements State {
     private static final int MAX_BATCH_SIZE = 100;
@@ -37,19 +38,23 @@ public class IndexState implements State {
         BulkRequestBuilder bulkRequest = client.prepareBulk();
         for(TridentTuple tuple : tridentTuples){
             if(! mapper.delete(tuple)){
-                String parentId = mapper.toParentId(tuple);
-                if(StringUtils.isEmpty(parentId)){
-                    bulkRequest.add(client.prepareIndex(
-                            mapper.toIndexName(tuple),
-                            mapper.toTypeName(tuple),
-                            mapper.toId(tuple)
-                            ).setSource(mapper.toDocument(tuple)));
-                } else {
-                    bulkRequest.add(client.prepareIndex(
-                            mapper.toIndexName(tuple),
-                            mapper.toTypeName(tuple),
-                            mapper.toId(tuple)
-                    ).setSource(mapper.toDocument(tuple)).setParent(parentId));
+                Map<String, Object> document = mapper.toDocument(tuple);
+                String id = mapper.toId(tuple);
+                if(document != null && id != null) {
+                    String parentId = mapper.toParentId(tuple);
+                    if(StringUtils.isEmpty(parentId)){
+                        bulkRequest.add(client.prepareIndex(
+                                mapper.toIndexName(tuple),
+                                mapper.toTypeName(tuple),
+                                id
+                                ).setSource(document));
+                    } else {
+                        bulkRequest.add(client.prepareIndex(
+                                mapper.toIndexName(tuple),
+                                mapper.toTypeName(tuple),
+                                id
+                        ).setSource(document).setParent(parentId));
+                    }
                 }
             } else {
                 bulkRequest.add(client.prepareDelete(
