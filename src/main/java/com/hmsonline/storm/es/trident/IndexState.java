@@ -62,30 +62,35 @@ public class IndexState implements State {
                         mapper.toTypeName(tuple),
                         mapper.toId(tuple)
                 ));
-            }            
+            }
             i++;
-            if(i >= MAX_BATCH_SIZE) {
-                try{
-                    BulkResponse bulkResponse = bulkRequest.execute().actionGet();
-                    if(bulkResponse.hasFailures()){
-                        this.exceptionHandler.onBulkRequestFailure(bulkResponse);
-                    }
-                } catch(ElasticsearchException e){
-                    this.exceptionHandler.onElasticSearchException(e);
-                } 
+            if (i >= MAX_BATCH_SIZE) {
+                runBulk(bulkRequest);
                 bulkRequest = client.prepareBulk();
                 i = 0;
             }
         }
         if (i > 0) {
-            try {
+            runBulk(bulkRequest);
+        }
+    }
+    
+    
+    private void runBulk(BulkRequestBuilder bulkRequest) {
+        int tryCount = 0;
+        boolean shouldTryAgain;
+        do {
+            shouldTryAgain = false;
+            try {                
                 BulkResponse bulkResponse = bulkRequest.execute().actionGet();
                 if (bulkResponse.hasFailures()) {
-                    this.exceptionHandler.onBulkRequestFailure(bulkResponse);
+                    shouldTryAgain = this.exceptionHandler.onBulkRequestFailure(bulkResponse, tryCount);
+                    tryCount++;
                 }
             } catch (ElasticsearchException e) {
-                this.exceptionHandler.onElasticSearchException(e);
+                shouldTryAgain = this.exceptionHandler.onElasticSearchException(e, tryCount);
+                tryCount++;
             }
-        }
+        } while (shouldTryAgain);
     }
 }
