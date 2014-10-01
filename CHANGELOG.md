@@ -1,3 +1,11 @@
+## 0.3.6
+
+* Fixing issue with makeState() instantiating multiple Node|Transport clients (one for each call).
+
+Now, clients are re-used across makeState() calls. A map is used to allow for multiple
+connections across clusters. The key for the map is the clusterName|clusterHosts. The value is
+the node|client.
+
 ## 0.3.4
 
 * [#8][]: Allowing the index mapper to pass back a null document or id to avoid indexing
