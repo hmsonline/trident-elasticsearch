@@ -5,6 +5,9 @@ import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.action.bulk.BulkRequestBuilder;
 import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.client.Client;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import storm.trident.operation.TridentCollector;
 import storm.trident.state.State;
 import storm.trident.tuple.TridentTuple;
@@ -13,6 +16,8 @@ import java.util.List;
 import java.util.Map;
 
 public class IndexState implements State {
+
+    public static final Logger LOG = LoggerFactory.getLogger(IndexState.class);
     private static final int MAX_BATCH_SIZE = 100;
     private Client client;
     private ExceptionHandler exceptionHandler;
@@ -77,20 +82,24 @@ public class IndexState implements State {
     
     
     private void runBulk(BulkRequestBuilder bulkRequest) {
-        int tryCount = 0;
-        boolean shouldTryAgain;
-        do {
-            shouldTryAgain = false;
-            try {                
-                BulkResponse bulkResponse = bulkRequest.execute().actionGet();
-                if (bulkResponse.hasFailures()) {
-                    shouldTryAgain = this.exceptionHandler.onBulkRequestFailure(bulkResponse, tryCount);
+        if(bulkRequest.numberOfActions() > 0) {
+            int tryCount = 0;
+            boolean shouldTryAgain;
+            do {
+                shouldTryAgain = false;
+                try {                
+                    BulkResponse bulkResponse = bulkRequest.execute().actionGet();
+                    if (bulkResponse.hasFailures()) {
+                        shouldTryAgain = this.exceptionHandler.onBulkRequestFailure(bulkResponse, tryCount);
+                        tryCount++;
+                    }
+                } catch (ElasticsearchException e) {
+                    shouldTryAgain = this.exceptionHandler.onElasticSearchException(e, tryCount);
                     tryCount++;
                 }
-            } catch (ElasticsearchException e) {
-                shouldTryAgain = this.exceptionHandler.onElasticSearchException(e, tryCount);
-                tryCount++;
-            }
-        } while (shouldTryAgain);
+            } while (shouldTryAgain);
+        } else {
+            LOG.debug("Empty batch being submitted");
+        }
     }
 }
