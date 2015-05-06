@@ -13,15 +13,20 @@ import java.util.List;
 import java.util.Map;
 
 public class IndexState implements State {
-    private static final int MAX_BATCH_SIZE = 100;
     private Client client;
     private ExceptionHandler exceptionHandler;
+    private final int batchSize;
 
-    public IndexState(Client client, ExceptionHandler exceptionHandler){
+    /**
+     * @param client the Client
+     * @param exceptionHandler the Exception Handler
+     * @param maxBatchSize specifying the batch size for ES bulk operations
+     */
+    public IndexState(final Client client, final ExceptionHandler exceptionHandler, final int maxBatchSize){
         this.client = client;
         this.exceptionHandler = exceptionHandler;
+        this.batchSize = maxBatchSize;
     }
-
 
     @Override
     public void beginCommit(Long aLong) {
@@ -64,7 +69,7 @@ public class IndexState implements State {
                 ));
             }
             i++;
-            if (i >= MAX_BATCH_SIZE) {
+            if (i >= batchSize) {
                 runBulk(bulkRequest);
                 bulkRequest = client.prepareBulk();
                 i = 0;
@@ -74,14 +79,13 @@ public class IndexState implements State {
             runBulk(bulkRequest);
         }
     }
-    
-    
+
     private void runBulk(BulkRequestBuilder bulkRequest) {
         int tryCount = 0;
         boolean shouldTryAgain;
         do {
             shouldTryAgain = false;
-            try {                
+            try {
                 BulkResponse bulkResponse = bulkRequest.execute().actionGet();
                 if (bulkResponse.hasFailures()) {
                     shouldTryAgain = this.exceptionHandler.onBulkRequestFailure(bulkResponse, tryCount);
