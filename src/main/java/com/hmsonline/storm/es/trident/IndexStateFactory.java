@@ -16,7 +16,7 @@ public class IndexStateFactory implements StateFactory {
     private final int batchSize;
 
     /**
-     * IndexFactory for IndexState using default BatchSize (100)
+     * IndexFactory for IndexState using default BatchSize (@see #DEFAULT_BATCH_SIZE)
      * @param clientFactory     the Client Factory
      * @param exceptionHandler  the Exception Handler
      */
