@@ -1,3 +1,8 @@
+## 0.3.7
+
+* [#10][]: Checking for empty batch before submitting
+* [#12][]: added the ability to specify the max batch size for ES bulk operations
+
 ## 0.3.6
 
 * Fixing issue with makeState() instantiating multiple Node|Transport clients (one for each call).
@@ -31,3 +36,5 @@ the node|client.
 * Initial release with ES 0.90.5
 
 [#8]: https://github.com/hmsonline/trident-elasticsearch/pulls/8
+[#10]: https://github.com/hmsonline/trident-elasticsearch/pulls/10
+[#12]: https://github.com/hmsonline/trident-elasticsearch/pulls/12
